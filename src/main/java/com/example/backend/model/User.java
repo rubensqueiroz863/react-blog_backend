@@ -25,6 +25,6 @@ public class User {
 
     private String provider; // google, github, credentials
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "createdAt", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 }

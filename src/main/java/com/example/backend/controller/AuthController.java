@@ -28,25 +28,14 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User user) {
-        if (user.getEmail() == null || user.getPassword() == null) {
-            return ResponseEntity.badRequest().body("Email e senha são obrigatórios");
-        }
-        
         if (userRepo.findByEmail(user.getEmail()).isPresent()) {
             return ResponseEntity.badRequest().body("Email já cadastrado");
         }
-
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setProvider("credentials");
-
-        // valores opcionais
-        if (user.getName() == null) user.setName("Usuário");
-        if (user.getImage() == null) user.setImage(null);
-
         userRepo.save(user);
         return ResponseEntity.ok("Usuário registrado");
     }
-
 
    @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest req) {
