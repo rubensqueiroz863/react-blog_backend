@@ -1,5 +1,6 @@
 package com.example.backend;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -15,18 +16,24 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> {}) // habilita CORS
+            .cors(cors -> {})
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
                 .anyRequest().permitAll()
             )
             .oauth2Login(oauth -> oauth
-                .defaultSuccessUrl("http://localhost:3000/overview", true)
+                .defaultSuccessUrl(System.getenv("FRONTEND_URL") + "/overview", true)
+            )
+            .logout(logout -> logout
+                .logoutUrl("/logout")
+                .deleteCookies("JSESSIONID")
+                .logoutSuccessHandler((request, response, authentication) -> {
+                    response.setStatus(HttpServletResponse.SC_OK);
+                })
             );
         return http.build();
     }
-
 
     @Bean
     public WebMvcConfigurer corsConfigurer() {
@@ -36,7 +43,8 @@ public class SecurityConfig {
                 registry.addMapping("/**")
                         .allowedOrigins(
                             "http://localhost:3000",
-                            "https://react-blog-orpin-three.vercel.app"
+                            "https://react-blog-orpin-three.vercel.app",
+                            "https://sticky-charil-react-blog-3b39d9e9.koyeb.app"
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowCredentials(true);

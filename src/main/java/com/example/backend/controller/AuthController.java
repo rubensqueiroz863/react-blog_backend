@@ -11,12 +11,9 @@ import com.example.backend.model.User;
 import com.example.backend.service.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.core.Authentication;
 
 import java.util.Map;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 
 
@@ -36,18 +33,26 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(OAuth2AuthenticationToken authentication) {
+    public ResponseEntity<?> me(Authentication authentication) {
         if (authentication == null) {
-            return ResponseEntity.status(401).body("Não authenticado");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        Map<String, Object> userAttributes = authentication.getPrincipal().getAttributes();
-        return ResponseEntity.ok(userAttributes);
-    }
 
-    @PostMapping("/logout")
-    public ResponseEntity<?> logout() {
-        return ResponseEntity.ok("Logout realizado");
-    }       
+        if (authentication.getPrincipal() instanceof org.springframework.security.oauth2.core.user.OAuth2User oAuth2User) {
+            return ResponseEntity.ok(oAuth2User.getAttributes());
+        }
+
+        if (authentication.getPrincipal() instanceof org.springframework.security.core.userdetails.User user) {
+            return ResponseEntity.ok(Map.of(
+                "email", user.getUsername(),
+                "name", "Usuário com credenciais",
+                "picture", ""
+            ));
+        }
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+       
     
     
 
