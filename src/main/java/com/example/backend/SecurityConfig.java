@@ -13,17 +13,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private static final String DEFAULT_FRONTEND_URL = "http://localhost:3000";
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        final String frontendUrl;
-        String envFrontendUrl = System.getenv("FRONTEND_URL");
-        if (envFrontendUrl == null || envFrontendUrl.isBlank()) {
-            frontendUrl = DEFAULT_FRONTEND_URL;
-        } else {
-            frontendUrl = envFrontendUrl;
-        }
 
         http
             .cors(cors -> {})
@@ -33,7 +24,7 @@ public class SecurityConfig {
                 .anyRequest().permitAll()
             )
             .oauth2Login(oauth -> oauth
-                .defaultSuccessUrl(frontendUrl + "/overview", true)
+                .defaultSuccessUrl("http://localhost:3000/overview", true)
             )
             .logout(logout -> logout
                 .logoutUrl("/logout")
