@@ -1,21 +1,19 @@
 package com.example.backend.controller;
 
-import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.example.backend.repository.UserRepository;
+import com.example.backend.model.User;
 import com.example.backend.model.LoginRequest;
 import com.example.backend.model.AuthResponse;
-import com.example.backend.model.User;
+import com.example.backend.repository.UserRepository;
 import com.example.backend.service.JwtService;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.core.Authentication;
 
 import java.util.Map;
-
-
 
 @RestController
 @RequestMapping("/auth")
@@ -38,23 +36,20 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        if (authentication.getPrincipal() instanceof org.springframework.security.oauth2.core.user.OAuth2User oAuth2User) {
+        if (authentication.getPrincipal() instanceof OAuth2User oAuth2User) {
             return ResponseEntity.ok(oAuth2User.getAttributes());
         }
 
         if (authentication.getPrincipal() instanceof org.springframework.security.core.userdetails.User user) {
             return ResponseEntity.ok(Map.of(
-                "email", user.getUsername(),
-                "name", "Usuário com credenciais",
-                "picture", ""
+                    "email", user.getUsername(),
+                    "name", "Usuário com credenciais",
+                    "picture", ""
             ));
         }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
-       
-    
-    
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User user) {
@@ -67,7 +62,7 @@ public class AuthController {
         return ResponseEntity.ok("Usuário registrado");
     }
 
-   @PostMapping("/login")
+    @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest req) {
         var user = userRepo.findByEmail(req.getEmail())
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
