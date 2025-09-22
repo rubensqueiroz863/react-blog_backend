@@ -18,7 +18,11 @@ public class SecurityConfig {
             .cors(cors -> {}) // habilita CORS
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/auth/**").permitAll()
                 .anyRequest().permitAll()
+            )
+            .oauth2Login(oauth -> oauth
+                .defaultSuccessUrl("http://localhost:3000/overview", true)
             );
         return http.build();
     }

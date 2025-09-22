@@ -10,10 +10,19 @@ import com.example.backend.model.AuthResponse;
 import com.example.backend.model.User;
 import com.example.backend.service.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+
+import java.util.Map;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
+
 
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 public class AuthController {
 
     private final UserRepository userRepo;
@@ -25,6 +34,22 @@ public class AuthController {
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(OAuth2AuthenticationToken authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(401).body("Não authenticado");
+        }
+        Map<String, Object> userAttributes = authentication.getPrincipal().getAttributes();
+        return ResponseEntity.ok(userAttributes);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        return ResponseEntity.ok("Logout realizado");
+    }       
+    
+    
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User user) {
