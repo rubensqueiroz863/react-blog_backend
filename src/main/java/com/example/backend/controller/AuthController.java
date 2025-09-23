@@ -40,16 +40,22 @@ public class AuthController {
             return ResponseEntity.ok(oAuth2User.getAttributes());
         }
 
-        if (authentication.getPrincipal() instanceof org.springframework.security.core.userdetails.User user) {
+        if (authentication.getPrincipal() instanceof User user) {
+            // Aqui pega os campos da sua entidade User
             return ResponseEntity.ok(Map.of(
-                    "email", user.getUsername(),
-                    "name", "Usuário com credenciais",
-                    "picture", ""
+                    "sub", user.getId(),
+                    "email", user.getEmail(),
+                    "name", user.getName(),
+                    "picture", "",
+                    "provider", ""
             ));
         }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
+
+
+
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User user) {
