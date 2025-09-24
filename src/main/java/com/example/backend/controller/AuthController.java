@@ -39,44 +39,56 @@ public class AuthController {
         if (authentication.getPrincipal() instanceof OAuth2User oAuth2User) {
             var attrs = oAuth2User.getAttributes();
 
-            // Detecta se é Google ou GitHub
+            // 🔹 Google
             if (attrs.containsKey("sub")) {
-                // Google
-                return ResponseEntity.ok(Map.of(
-                        "sub", attrs.get("sub"),
-                        "email", attrs.get("email"),
-                        "name", attrs.get("name"),
-                        "picture", attrs.get("picture"),
-                        "provider", "google"
-                ));
-            } else if (attrs.containsKey("login")) {
-                // GitHub
-                return ResponseEntity.ok(Map.of(
-                        "sub", attrs.get("id"),
-                        "email", attrs.get("email"), // pode ser null, GitHub nem sempre retorna email
-                        "name", attrs.get("login"),
-                        "picture", attrs.get("avatar_url"),
-                        "provider", "github"
-                ));
+                String email = (String) attrs.get("email");
+
+                var user = userRepo.findByEmail(email).orElseGet(() -> {
+                    User newUser = new User();
+                    newUser.setEmail(email);
+                    newUser.setName((String) attrs.get("name"));
+                    newUser.setProvider("google");
+                    return userRepo.save(newUser);
+                });
+
+                String token = jwtService.generateToken(user);
+
+                return ResponseEntity.ok(new AuthResponse(token, user.getEmail(), user.getName()));
+            }
+            // 🔹 GitHub
+            else if (attrs.containsKey("login")) {
+                String login = (String) attrs.get("login");
+                String tempEmail = (String) attrs.get("email"); // pode ser null
+
+                final String email;
+                if (tempEmail == null || tempEmail.isBlank()) {
+                    email = login + "@github.com"; // fallback se o email não vier
+                } else {
+                    email = tempEmail;
+                }
+
+                var user = userRepo.findByEmail(email).orElseGet(() -> {
+                    User newUser = new User();
+                    newUser.setEmail(email);
+                    newUser.setName(login);
+                    newUser.setProvider("github");
+                    return userRepo.save(newUser);
+                });
+
+                String token = jwtService.generateToken(user);
+
+                return ResponseEntity.ok(new AuthResponse(token, user.getEmail(), user.getName()));
             }
         }
 
+        // 🔹 Credenciais normais
         if (authentication.getPrincipal() instanceof User user) {
-            return ResponseEntity.ok(Map.of(
-                    "sub", user.getId(),
-                    "email", user.getEmail(),
-                    "name", user.getName(),
-                    "picture", "",
-                    "provider", "credentials"
-            ));
+            String token = jwtService.generateToken(user);
+            return ResponseEntity.ok(new AuthResponse(token, user.getEmail(), user.getName()));
         }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
-
-
-
-
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User user) {
