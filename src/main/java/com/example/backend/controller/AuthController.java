@@ -13,8 +13,6 @@ import com.example.backend.model.AuthResponse;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.service.JwtService;
 
-import java.util.Map;
-
 @RestController
 @RequestMapping("/auth")
 @CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
@@ -48,30 +46,6 @@ public class AuthController {
                     newUser.setEmail(email);
                     newUser.setName((String) attrs.get("name"));
                     newUser.setProvider("google");
-                    return userRepo.save(newUser);
-                });
-
-                String token = jwtService.generateToken(user);
-
-                return ResponseEntity.ok(new AuthResponse(token, user.getEmail(), user.getName()));
-            }
-            // 🔹 GitHub
-            else if (attrs.containsKey("login")) {
-                String login = (String) attrs.get("login");
-                String tempEmail = (String) attrs.get("email"); // pode ser null
-
-                final String email;
-                if (tempEmail == null || tempEmail.isBlank()) {
-                    email = login + "@github.com"; // fallback se o email não vier
-                } else {
-                    email = tempEmail;
-                }
-
-                var user = userRepo.findByEmail(email).orElseGet(() -> {
-                    User newUser = new User();
-                    newUser.setEmail(email);
-                    newUser.setName(login);
-                    newUser.setProvider("github");
                     return userRepo.save(newUser);
                 });
 
