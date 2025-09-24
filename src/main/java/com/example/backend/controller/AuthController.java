@@ -37,22 +37,43 @@ public class AuthController {
         }
 
         if (authentication.getPrincipal() instanceof OAuth2User oAuth2User) {
-            return ResponseEntity.ok(oAuth2User.getAttributes());
+            var attrs = oAuth2User.getAttributes();
+
+            // Detecta se é Google ou GitHub
+            if (attrs.containsKey("sub")) {
+                // Google
+                return ResponseEntity.ok(Map.of(
+                        "sub", attrs.get("sub"),
+                        "email", attrs.get("email"),
+                        "name", attrs.get("name"),
+                        "picture", attrs.get("picture"),
+                        "provider", "google"
+                ));
+            } else if (attrs.containsKey("login")) {
+                // GitHub
+                return ResponseEntity.ok(Map.of(
+                        "sub", attrs.get("id"),
+                        "email", attrs.get("email"), // pode ser null, GitHub nem sempre retorna email
+                        "name", attrs.get("login"),
+                        "picture", attrs.get("avatar_url"),
+                        "provider", "github"
+                ));
+            }
         }
 
         if (authentication.getPrincipal() instanceof User user) {
-            // Aqui pega os campos da sua entidade User
             return ResponseEntity.ok(Map.of(
                     "sub", user.getId(),
                     "email", user.getEmail(),
                     "name", user.getName(),
                     "picture", "",
-                    "provider", ""
+                    "provider", "credentials"
             ));
         }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
+
 
 
 
