@@ -39,6 +39,10 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                 Locale locale = request.getLocale();
                 String languageTag = locale.toLanguageTag(); // ex: "pt-BR"
 
+                System.out.println("Accept-Language: " + request.getHeader("Accept-Language"));
+                System.out.println("Locale detectado: " + request.getLocale());
+
+
                 var user = userRepo.findByEmail(email).orElseGet(() -> {
                     User newUser = new User();
                     newUser.setEmail(email);
