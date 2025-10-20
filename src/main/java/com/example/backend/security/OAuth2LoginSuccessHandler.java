@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Locale;
 
 @Component
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
@@ -31,23 +32,33 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         if (authentication.getPrincipal() instanceof OAuth2User oAuth2User) {
             var attrs = oAuth2User.getAttributes();
 
-            // Apenas Google
-            if (attrs.containsKey("sub")) {
+            if (attrs.containsKey("sub")) { // Apenas Google
                 String email = (String) attrs.get("email");
+
+                // Pega idioma preferido do navegador
+                Locale locale = request.getLocale();
+                String languageTag = locale.toLanguageTag(); // ex: "pt-BR"
 
                 var user = userRepo.findByEmail(email).orElseGet(() -> {
                     User newUser = new User();
                     newUser.setEmail(email);
                     newUser.setName((String) attrs.get("name"));
                     newUser.setProvider("google");
+                    newUser.setLanguage(languageTag); // salva ao criar
                     return userRepo.save(newUser);
                 });
 
+                // Atualiza linguagem se mudou
+                if (user.getLanguage() == null || !user.getLanguage().equals(languageTag)) {
+                    user.setLanguage(languageTag);
+                    userRepo.save(user);
+                }
+
                 String token = jwtService.generateToken(user);
 
-                // Retorna o token no corpo da resposta
                 response.setContentType("application/json");
-                response.getWriter().write("{\"token\":\"" + token + "\",\"email\":\"" + user.getEmail() + "\",\"name\":\"" + user.getName() + "\"}");
+                response.getWriter().write("{\"token\":\"" + token + "\",\"email\":\"" + user.getEmail() +
+                        "\",\"name\":\"" + user.getName() + "\",\"language\":\"" + user.getLanguage() + "\"}");
                 response.getWriter().flush();
             }
         }

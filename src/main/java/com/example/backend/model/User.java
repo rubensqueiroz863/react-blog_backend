@@ -14,6 +14,8 @@ public class User {
     @Column(length = 36)
     private String id = UUID.randomUUID().toString();
 
+    private String language;
+
     @Column(unique = true, nullable = false)
     private String email;
 
