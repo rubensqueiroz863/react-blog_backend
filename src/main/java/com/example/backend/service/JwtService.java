@@ -1,11 +1,8 @@
 package com.example.backend.service;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
-
 import com.example.backend.model.User;
 
 import java.security.Key;
@@ -16,10 +13,22 @@ import java.util.function.Function;
 public class JwtService {
 
     private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    private final long expiration = 1000 * 60 * 60 * 24; // 24h
 
-    // 🔹 Gerar Token
-    public String generateToken(User user) {
+    // Tempo de expiração
+    private final long ACCESS_EXPIRATION = 1000 * 60 * 60;       // 1 hora
+    private final long REFRESH_EXPIRATION = 1000 * 60 * 60 * 24 * 7; // 7 dias
+
+    // 🔹 Access Token
+    public String generateAccessToken(User user) {
+        return buildToken(user, ACCESS_EXPIRATION);
+    }
+
+    // 🔹 Refresh Token
+    public String generateRefreshToken(User user) {
+        return buildToken(user, REFRESH_EXPIRATION);
+    }
+
+    private String buildToken(User user, long expiration) {
         return Jwts.builder()
                 .setSubject(user.getEmail())
                 .claim("id", user.getId())
@@ -30,18 +39,19 @@ public class JwtService {
                 .compact();
     }
 
-    // 🔹 Extrair email (subject) do token
+    // 🔹 Extrações e validações
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    // 🔹 Validar token
     public boolean isTokenValid(String token, User user) {
-        final String username = extractUsername(token);
-        return (username.equals(user.getEmail()) && !isTokenExpired(token));
+        try {
+            final String username = extractUsername(token);
+            return username.equals(user.getEmail()) && !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
     }
-
-    // =============== Helpers ===============
 
     private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());

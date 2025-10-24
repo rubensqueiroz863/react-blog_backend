@@ -28,6 +28,7 @@ public class AuthController {
         this.jwtService = jwtService;
     }
 
+    // 🔹 Obter usuário atual
     @GetMapping("/me")
     public ResponseEntity<?> me(Authentication authentication) {
         if (authentication == null) {
@@ -37,8 +38,7 @@ public class AuthController {
         if (authentication.getPrincipal() instanceof OAuth2User oAuth2User) {
             var attrs = oAuth2User.getAttributes();
 
-            // 🔹 Google
-            if (attrs.containsKey("sub")) {
+            if (attrs.containsKey("sub")) { // Google
                 String email = (String) attrs.get("email");
 
                 var user = userRepo.findByEmail(email).orElseGet(() -> {
@@ -49,21 +49,23 @@ public class AuthController {
                     return userRepo.save(newUser);
                 });
 
-                String token = jwtService.generateToken(user);
+                String accessToken = jwtService.generateAccessToken(user);
+                String refreshToken = jwtService.generateRefreshToken(user);
 
-                return ResponseEntity.ok(new AuthResponse(token, user.getEmail(), user.getName()));
+                return ResponseEntity.ok(new AuthResponse(accessToken, refreshToken, user.getEmail(), user.getName()));
             }
         }
 
-        // 🔹 Credenciais normais
         if (authentication.getPrincipal() instanceof User user) {
-            String token = jwtService.generateToken(user);
-            return ResponseEntity.ok(new AuthResponse(token, user.getEmail(), user.getName()));
+            String accessToken = jwtService.generateAccessToken(user);
+            String refreshToken = jwtService.generateRefreshToken(user);
+            return ResponseEntity.ok(new AuthResponse(accessToken, refreshToken, user.getEmail(), user.getName()));
         }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
+    // 🔹 Registro
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User user) {
         if (userRepo.findByEmail(user.getEmail()).isPresent()) {
@@ -75,6 +77,7 @@ public class AuthController {
         return ResponseEntity.ok("Usuário registrado");
     }
 
+    // 🔹 Login
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest req) {
         var user = userRepo.findByEmail(req.getEmail())
@@ -84,7 +87,29 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Senha inválida");
         }
 
-        String token = jwtService.generateToken(user);
-        return ResponseEntity.ok(new AuthResponse(token, user.getEmail(), user.getName()));
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+
+        return ResponseEntity.ok(new AuthResponse(accessToken, refreshToken, user.getEmail(), user.getName()));
+    }
+
+    // 🔹 Refresh Token
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@RequestBody String refreshToken) {
+        try {
+            String email = jwtService.extractUsername(refreshToken);
+            var user = userRepo.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+            if (!jwtService.isTokenValid(refreshToken, user)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Refresh token inválido");
+            }
+
+            String newAccessToken = jwtService.generateAccessToken(user);
+            return ResponseEntity.ok(new AuthResponse(newAccessToken, refreshToken, user.getEmail(), user.getName()));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token expirado ou inválido");
+        }
     }
 }
