@@ -8,6 +8,7 @@ import com.example.backend.model.User;
 import java.security.Key;
 import java.util.Date;
 import java.util.function.Function;
+import java.util.UUID;
 
 @Service
 public class JwtService {
@@ -27,19 +28,18 @@ public class JwtService {
         return buildToken(user, REFRESH_EXPIRATION, "refresh");
     }
 
-
     private String buildToken(User user, long expiration, String type) {
         return Jwts.builder()
+                .setId(UUID.randomUUID().toString()) // 👈 garante unicidade
                 .setSubject(user.getEmail())
                 .claim("id", user.getId())
                 .claim("name", user.getName())
-                .claim("type", type) // 👈 diferença principal
+                .claim("type", type)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(key)
                 .compact();
     }
-
 
     // 🔹 Extrações e validações
     public String extractUsername(String token) {
