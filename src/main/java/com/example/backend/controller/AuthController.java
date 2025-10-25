@@ -1,6 +1,9 @@
 package com.example.backend.controller;
 
 import org.springframework.http.ResponseEntity;
+
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
@@ -95,7 +98,8 @@ public class AuthController {
 
     // 🔹 Refresh Token
     @PostMapping("/refresh")
-    public ResponseEntity<?> refresh(@RequestBody String refreshToken) {
+    public ResponseEntity<?> refresh(@RequestBody Map<String, String> body) {
+        String refreshToken = body.get("refreshToken");
         try {
             String email = jwtService.extractUsername(refreshToken);
             var user = userRepo.findByEmail(email)
