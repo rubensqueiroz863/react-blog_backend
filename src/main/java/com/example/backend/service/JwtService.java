@@ -20,24 +20,26 @@ public class JwtService {
 
     // 🔹 Access Token
     public String generateAccessToken(User user) {
-        return buildToken(user, ACCESS_EXPIRATION);
+        return buildToken(user, ACCESS_EXPIRATION, "access");
     }
 
-    // 🔹 Refresh Token
     public String generateRefreshToken(User user) {
-        return buildToken(user, REFRESH_EXPIRATION);
+        return buildToken(user, REFRESH_EXPIRATION, "refresh");
     }
 
-    private String buildToken(User user, long expiration) {
+
+    private String buildToken(User user, long expiration, String type) {
         return Jwts.builder()
                 .setSubject(user.getEmail())
                 .claim("id", user.getId())
                 .claim("name", user.getName())
+                .claim("type", type) // 👈 diferença principal
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(key)
                 .compact();
     }
+
 
     // 🔹 Extrações e validações
     public String extractUsername(String token) {
