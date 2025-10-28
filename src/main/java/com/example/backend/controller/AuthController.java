@@ -18,7 +18,14 @@ import com.example.backend.service.JwtService;
 
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+@CrossOrigin(
+    origins = {
+        "http://localhost:3000",
+        "https://react-blog-orpin-three.vercel.app",
+    },
+    allowCredentials = "true"
+)
+
 public class AuthController {
 
     private final UserRepository userRepo;
