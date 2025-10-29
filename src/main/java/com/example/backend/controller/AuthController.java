@@ -103,16 +103,21 @@ public class AuthController {
         return ResponseEntity.ok(new AuthResponse(accessToken, refreshToken, user.getEmail(), user.getName()));
     }
 
-    // 🔹 Refresh Token
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@RequestBody Map<String, String> body) {
         String refreshToken = body.get("refreshToken");
+        System.out.println("Recebido refreshToken: " + refreshToken);
+
         try {
             String email = jwtService.extractUsername(refreshToken);
+            System.out.println("Email extraído: " + email);
             var user = userRepo.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-            if (!jwtService.isTokenValid(refreshToken, user)) {
+            boolean valid = jwtService.isTokenValid(refreshToken, user);
+            System.out.println("Token válido? " + valid);
+
+            if (!valid) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Refresh token inválido");
             }
 
@@ -120,7 +125,9 @@ public class AuthController {
             return ResponseEntity.ok(new AuthResponse(newAccessToken, refreshToken, user.getEmail(), user.getName()));
 
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token expirado ou inválido");
         }
     }
+
 }
