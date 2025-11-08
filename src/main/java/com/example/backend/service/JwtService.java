@@ -16,7 +16,7 @@ public class JwtService {
     private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
     // Tempo de expiração
-    private final long ACCESS_EXPIRATION = 1000 * 60 * 60;       // 1 hora
+    private final long ACCESS_EXPIRATION = 1000 * 60 * 60 * 24 * 3;       // 3 dias
     private final long REFRESH_EXPIRATION = 1000 * 60 * 60 * 24 * 7; // 7 dias
 
     // 🔹 Access Token
