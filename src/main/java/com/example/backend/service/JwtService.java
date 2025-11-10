@@ -1,59 +1,47 @@
 package com.example.backend.service;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
+
 import com.example.backend.model.User;
 
 import java.security.Key;
 import java.util.Date;
 import java.util.function.Function;
-import java.util.UUID;
 
 @Service
 public class JwtService {
 
     private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private final long expiration = 1000 * 60 * 60 * 24; // 24h
 
-    // Tempo de expiração
-    private final long ACCESS_EXPIRATION = 1000 * 60 * 60 * 24 * 3;       // 3 dias
-    private final long REFRESH_EXPIRATION = 1000 * 60 * 60 * 24 * 7; // 7 dias
-
-    // 🔹 Access Token
-    public String generateAccessToken(User user) {
-        return buildToken(user, ACCESS_EXPIRATION, "access");
-    }
-
-    public String generateRefreshToken(User user) {
-        return buildToken(user, REFRESH_EXPIRATION, "refresh");
-    }
-
-    private String buildToken(User user, long expiration, String type) {
+    // 🔹 Gerar Token
+    public String generateToken(User user) {
         return Jwts.builder()
-                .setId(UUID.randomUUID().toString()) // 👈 garante unicidade
                 .setSubject(user.getEmail())
                 .claim("id", user.getId())
                 .claim("name", user.getName())
-                .claim("type", type)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(key)
                 .compact();
     }
 
-    // 🔹 Extrações e validações
+    // 🔹 Extrair email (subject) do token
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
+    // 🔹 Validar token
     public boolean isTokenValid(String token, User user) {
-        try {
-            final String username = extractUsername(token);
-            return username.equals(user.getEmail()) && !isTokenExpired(token);
-        } catch (Exception e) {
-            return false;
-        }
+        final String username = extractUsername(token);
+        return (username.equals(user.getEmail()) && !isTokenExpired(token));
     }
+
+    // =============== Helpers ===============
 
     private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());

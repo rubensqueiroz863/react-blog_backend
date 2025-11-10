@@ -32,9 +32,10 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         if (authentication.getPrincipal() instanceof OAuth2User oAuth2User) {
             var attrs = oAuth2User.getAttributes();
 
-            if (attrs.containsKey("sub")) { // Google
+            if (attrs.containsKey("sub")) { // Apenas Google
                 String email = (String) attrs.get("email");
 
+                // Detecta idioma do navegador (ex: "pt-BR", "en-US", etc.)
                 Locale locale = request.getLocale();
                 String languageTag = locale.toLanguageTag();
 
@@ -43,22 +44,22 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                     newUser.setEmail(email);
                     newUser.setName((String) attrs.get("name"));
                     newUser.setProvider("google");
-                    newUser.setLanguage(languageTag);
+                    newUser.setLanguage(languageTag); // salva o idioma ao criar
                     return userRepo.save(newUser);
                 });
 
+                // Atualiza se mudou
                 if (user.getLanguage() == null || !user.getLanguage().equals(languageTag)) {
                     user.setLanguage(languageTag);
                     userRepo.save(user);
                 }
 
-                String accessToken = jwtService.generateAccessToken(user);
-                String refreshToken = jwtService.generateRefreshToken(user);
+                String token = jwtService.generateToken(user);
 
+                // Retorna o token e idioma
                 response.setContentType("application/json");
                 response.getWriter().write(
-                        "{\"accessToken\":\"" + accessToken + "\"," +
-                        "\"refreshToken\":\"" + refreshToken + "\"," +
+                        "{\"token\":\"" + token + "\"," +
                         "\"email\":\"" + user.getEmail() + "\"," +
                         "\"name\":\"" + user.getName() + "\"," +
                         "\"language\":\"" + user.getLanguage() + "\"}"

@@ -29,40 +29,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-
         String authHeader = request.getHeader("Authorization");
-
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = authHeader.substring(7).trim();
-
-        // ✅ Verifica se o token não está vazio antes de parsear
-        if (token.isEmpty()) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        String email;
-        try {
-            email = jwtService.extractUsername(token);
-        } catch (Exception e) {
-            // Se o token for inválido, ignora e deixa passar sem autenticação
-            filterChain.doFilter(request, response);
-            return;
-        }
+        String token = authHeader.substring(7);
+        String email = jwtService.extractUsername(token);
 
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             var user = userRepo.findByEmail(email).orElse(null);
             if (user != null && jwtService.isTokenValid(token, user)) {
-                var authToken = new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
 
         filterChain.doFilter(request, response);
     }
-
 }
