@@ -64,7 +64,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:3000",
-                "https://react-blog-orpin-three.vercel.app",
+                "https://paperlessblog.vercel.app",
                 "https://sticky-charil-react-blog-3b39d9e9.koyeb.app"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
