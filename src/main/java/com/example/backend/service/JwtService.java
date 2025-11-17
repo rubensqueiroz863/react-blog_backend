@@ -2,9 +2,10 @@ package com.example.backend.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
 
 import com.example.backend.model.User;
 
@@ -15,7 +16,7 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-    private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private final Key key = Keys.hmacShaKeyFor(System.getenv("JWT_SECRET").getBytes(StandardCharsets.UTF_8));
     private final long expiration = 1000 * 60 * 60 * 24 * 7; // 7 dias
 
     // 🔹 Gerar Token
